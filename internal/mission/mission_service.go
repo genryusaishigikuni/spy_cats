@@ -6,13 +6,18 @@ import (
 
 	"github.com/genryusaishigikuni/spy_cats/internal/cat"
 	"github.com/genryusaishigikuni/spy_cats/internal/target"
+	"gorm.io/gorm"
 )
 
-// Service defines business operations for the mission domain.
 type Service interface {
 	CreateMission(catID uint, targetNames []string) (*Mission, error)
 	CompleteTarget(targetID uint) error
-	// Add other methods as needed (ListMissions, etc.).
+
+	ListMissions() ([]Mission, error)
+	GetMissionByID(id uint) (*Mission, error)
+	DeleteMission(id uint) error
+	MarkMissionComplete(missionID uint) error
+	AssignCat(missionID, catID uint) error
 }
 
 type service struct {
@@ -21,7 +26,6 @@ type service struct {
 	targetRepo  target.Repository
 }
 
-// NewService constructs a new mission service with the required repositories.
 func NewService(
 	mRepo Repository,
 	cRepo cat.Repository,
@@ -34,12 +38,23 @@ func NewService(
 	}
 }
 
-// CreateMission creates a new mission, ensuring valid cat and 1–3 target names.
+// CreateMission creates a new mission, ensuring the cat is valid
+// and doesn't already have an ongoing mission, plus 1–3 targets.
 func (s *service) CreateMission(catID uint, targetNames []string) (*Mission, error) {
 	// Validate the cat
 	_, err := s.catRepo.FindByID(catID)
 	if err != nil {
 		return nil, errors.New("cat not found")
+	}
+
+	// Check if the cat already has an ongoing mission
+	_, err = s.missionRepo.FindOngoingByCatID(catID)
+	if err == nil {
+		// If no error, that means we found a mission
+		return nil, errors.New("this cat already has an ongoing mission")
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		// If it's another kind of error, return it
+		return nil, err
 	}
 
 	// Validate targets (1 to 3)
@@ -80,7 +95,6 @@ func (s *service) CompleteTarget(targetID uint) error {
 		return err
 	}
 
-	// If already completed, return early (optional)
 	if t.Status == "COMPLETED" {
 		return errors.New("target is already completed")
 	}
@@ -94,7 +108,7 @@ func (s *service) CompleteTarget(targetID uint) error {
 		return err
 	}
 
-	// Check whether all targets for this mission are completed
+	// Check if all targets are completed
 	targets, err := s.targetRepo.FindByMissionID(t.MissionID)
 	if err != nil {
 		return err
@@ -108,20 +122,94 @@ func (s *service) CompleteTarget(targetID uint) error {
 		}
 	}
 
-	// If all done, update the mission as completed
 	if allDone {
-		mission, err := s.missionRepo.FindByID(t.MissionID)
-		if err != nil {
-			return err
-		}
-
-		mission.Status = "COMPLETED"
-		mission.CompletedAt = &now
-
-		if err := s.missionRepo.Update(mission); err != nil {
+		if err := s.markMissionCompleted(t.MissionID); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// ---------------- Additional Methods ---------------- //
+
+// ListMissions returns all missions.
+func (s *service) ListMissions() ([]Mission, error) {
+	return s.missionRepo.List()
+}
+
+// GetMissionByID returns a single mission by ID.
+func (s *service) GetMissionByID(id uint) (*Mission, error) {
+	m, err := s.missionRepo.FindByID(id)
+	if err != nil {
+		return nil, errors.New("mission not found")
+	}
+	return m, nil
+}
+
+// DeleteMission removes a mission if it isn't assigned to a cat (i.e. catID=0).
+// Alternatively, you might interpret "cannot delete if assigned to a cat" as
+// "cannot delete if status != COMPLETED" or some other logic – this is a sample.
+func (s *service) DeleteMission(id uint) error {
+	m, err := s.missionRepo.FindByID(id)
+	if err != nil {
+		return errors.New("mission not found")
+	}
+
+	// If there's a cat assigned, forbid deletion
+	if m.CatID != 0 {
+		return errors.New("cannot delete a mission that is assigned to a cat")
+	}
+
+	return s.missionRepo.Delete(id)
+}
+
+// MarkMissionComplete forcibly completes a mission, ignoring whether
+// all targets are done. (Optional method)
+func (s *service) MarkMissionComplete(missionID uint) error {
+	return s.markMissionCompleted(missionID)
+}
+
+// AssignCat assigns a cat to an existing mission if the mission is not completed
+// and the cat has no ongoing missions.
+func (s *service) AssignCat(missionID, catID uint) error {
+	// Validate the mission
+	m, err := s.missionRepo.FindByID(missionID)
+	if err != nil {
+		return errors.New("mission not found")
+	}
+	if m.Status == "COMPLETED" {
+		return errors.New("cannot assign a cat to a completed mission")
+	}
+
+	// Validate cat
+	_, err = s.catRepo.FindByID(catID)
+	if err != nil {
+		return errors.New("cat not found")
+	}
+
+	// Check if cat is free
+	_, err = s.missionRepo.FindOngoingByCatID(catID)
+	if err == nil {
+		return errors.New("this cat is already on another ongoing mission")
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	m.CatID = catID
+	return s.missionRepo.Update(m)
+}
+
+// markMissionCompleted is an internal helper to set status to be COMPLETED.
+func (s *service) markMissionCompleted(missionID uint) error {
+	m, err := s.missionRepo.FindByID(missionID)
+	if err != nil {
+		return errors.New("mission not found")
+	}
+
+	now := time.Now()
+	m.Status = "COMPLETED"
+	m.CompletedAt = &now
+
+	return s.missionRepo.Update(m)
 }

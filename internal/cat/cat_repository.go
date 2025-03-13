@@ -1,8 +1,6 @@
 package cat
 
-import (
-	"gorm.io/gorm"
-)
+import "gorm.io/gorm"
 
 type Repository interface {
 	Create(cat *Cat) error
@@ -11,6 +9,7 @@ type Repository interface {
 	Update(cat *Cat) error
 	Delete(id uint) error
 }
+
 type repository struct {
 	db *gorm.DB
 }

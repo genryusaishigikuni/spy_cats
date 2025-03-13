@@ -1,0 +1,44 @@
+services:
+  app:
+    build: .
+    container_name: spy_cats_app
+    ports:
+      - "8080:8080"  # Exposes Go API on port 8080
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db          # This is the service name of the Postgres container
+      DB_PORT: 5432
+      DB_USER: postgres     # User for DB
+      DB_PASSWORD: dbpassword
+      DB_NAME: spy_cats_db # Database name
+    networks:
+      - spycats-network
+    command: ["sh", "-c", "until pg_isready -h db -p 5432; do echo waiting for db; sleep 2; done; ./spy_cats"]
+
+  db:
+    image: postgres:15
+    container_name: spy_cats_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dbpassword
+      POSTGRES_DB: spy_cats_db
+    ports:
+      - "5431:5432"   # Exposes Postgres DB on port 5431 of the host machine
+    volumes:
+      - db_data:/var/lib/postgresql/data # Persists DB data
+    networks:
+      - spycats-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+
+volumes:
+  db_data:  # Named volume for persistent data storage
+
+networks:
+  spycats-network:
+    driver: bridge

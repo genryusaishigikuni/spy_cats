@@ -26,7 +26,7 @@ func Load() *Config {
 
 	dbPort := os.Getenv("DB_PORT")
 	if dbPort == "" {
-		dbPort = "5432"
+		dbPort = "5431"
 	}
 
 	dbUser := os.Getenv("DB_USER")

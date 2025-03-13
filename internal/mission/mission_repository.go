@@ -6,18 +6,20 @@ type Repository interface {
 	Create(m *Mission) error
 	FindByID(id uint) (*Mission, error)
 	Update(m *Mission) error
-	// add more as needed (List, Delete, etc.)
+	Delete(id uint) error
+	List() ([]Mission, error)
+	FindOngoingByCatID(catID uint) (*Mission, error)
 }
+
 type repository struct {
 	db *gorm.DB
 }
 
-// NewRepository creates a new mission repository with the given GORM DB instance.
 func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-// Create inserts a new Mission record into the database.
+// Create inserts a new Mission record.
 func (r *repository) Create(m *Mission) error {
 	return r.db.Create(m).Error
 }
@@ -31,7 +33,32 @@ func (r *repository) FindByID(id uint) (*Mission, error) {
 	return &mission, nil
 }
 
-// Update applies changes to an existing Mission record in the database.
+// Update applies changes to an existing Mission record.
 func (r *repository) Update(m *Mission) error {
 	return r.db.Save(m).Error
+}
+
+// Delete removes a Mission by its ID.
+func (r *repository) Delete(id uint) error {
+	return r.db.Delete(&Mission{}, id).Error
+}
+
+// List returns all missions.
+func (r *repository) List() ([]Mission, error) {
+	var missions []Mission
+	if err := r.db.Find(&missions).Error; err != nil {
+		return nil, err
+	}
+	return missions, nil
+}
+
+// FindOngoingByCatID checks if the cat has an ongoing mission (Status != 'COMPLETED').
+func (r *repository) FindOngoingByCatID(catID uint) (*Mission, error) {
+	var m Mission
+	if err := r.db.
+		Where("cat_id = ? AND status <> ?", catID, "COMPLETED").
+		First(&m).Error; err != nil {
+		return nil, err
+	}
+	return &m, nil
 }
