@@ -103,6 +103,11 @@ cd spy_cats
 ```
 docker-compose up -d
 ```
+or depending on your docker compose version
+
+```
+docker compose up -d
+```
 
 
 
