@@ -1,0 +1,144 @@
+{
+	"info": {
+		"_postman_id": "95f28487-5eaf-4869-b970-270b1a499a54",
+		"name": "Cat Requests",
+		"description": "# This is the collection which stores only cat related requests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "39136646"
+	},
+	"item": [
+		{
+			"name": "http://localhost:8080/cats",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Whiskers\",\n  \"breed\": \"Siamese\",\n  \"years_of_experience\": 3,\n  \"salary\": 1500.50\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/cats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"cats"
+					]
+				},
+				"description": "Creates a new spy cat. The cat is described by a name, breed (which is validated via TheCatAPI), years of experience, and salary."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/cats",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/cats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"cats"
+					]
+				},
+				"description": "Retrieves a list of all spy cats."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/cats/:id",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/cats/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"cats",
+						"1"
+					]
+				},
+				"description": "Retrieves a specific spy cat by its ID. Replace `:id` with the actual cat ID (e.g., `1`)."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/cats/:id",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Whiskers Updated\",\n  \"breed\": \"Maine Coon\",\n  \"years_of_experience\": 5,\n  \"salary\": 1800.75\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/cats/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"cats",
+						"1"
+					]
+				},
+				"description": "Updates an existing spy cat’s details. Primarily used to update the cat’s salary along with other details. Replace `:id` with the actual cat ID."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/cats/:id",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/cats/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"cats",
+						"1"
+					]
+				},
+				"description": "Deletes a spy cat from the system by its ID. Replace `:id` with the actual cat ID."
+			},
+			"response": []
+		}
+	]
+}

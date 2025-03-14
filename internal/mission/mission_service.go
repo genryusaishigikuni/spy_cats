@@ -2,6 +2,7 @@ package mission
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/genryusaishigikuni/spy_cats/internal/cat"
@@ -18,6 +19,9 @@ type Service interface {
 	DeleteMission(id uint) error
 	MarkMissionComplete(missionID uint) error
 	AssignCat(missionID, catID uint) error
+
+	// AddTargetToMission New: Add a target to an existing mission.
+	AddTargetToMission(missionID uint, name, country, notes string) error
 }
 
 type service struct {
@@ -38,8 +42,7 @@ func NewService(
 	}
 }
 
-// CreateMission creates a new mission, ensuring the cat is valid
-// and doesn't already have an ongoing mission, plus 1–3 targets.
+// CreateMission creates a new mission, ensuring the cat is valid and doesn't have an ongoing mission, plus 1–3 targets.
 func (s *service) CreateMission(catID uint, targetNames []string) (*Mission, error) {
 	// Validate the cat
 	_, err := s.catRepo.FindByID(catID)
@@ -50,10 +53,8 @@ func (s *service) CreateMission(catID uint, targetNames []string) (*Mission, err
 	// Check if the cat already has an ongoing mission
 	_, err = s.missionRepo.FindOngoingByCatID(catID)
 	if err == nil {
-		// If no error, that means we found a mission
 		return nil, errors.New("this cat already has an ongoing mission")
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		// If it's another kind of error, return it
 		return nil, err
 	}
 
@@ -71,7 +72,7 @@ func (s *service) CreateMission(catID uint, targetNames []string) (*Mission, err
 		return nil, err
 	}
 
-	// Create targets for this mission
+	// Create targets for this mission using the target repository directly.
 	for _, tName := range targetNames {
 		t := &target.Target{
 			MissionID: m.ID,
@@ -86,8 +87,40 @@ func (s *service) CreateMission(catID uint, targetNames []string) (*Mission, err
 	return m, nil
 }
 
-// CompleteTarget marks a target as completed and, if all targets in the mission
-// are completed, marks the mission as completed as well.
+// AddTargetToMission adds a new target to an existing mission,
+// ensuring the mission is ongoing and does not exceed 3 targets.
+func (s *service) AddTargetToMission(missionID uint, name, country, notes string) error {
+	// 1) Check mission exists and is not completed
+	m, err := s.missionRepo.FindByID(missionID)
+	if err != nil {
+		return fmt.Errorf("mission not found: %w", err)
+	}
+	if m.Status == "COMPLETED" {
+		return errors.New("cannot add target to a completed mission")
+	}
+
+	// 2) Check number of existing targets
+	existingTargets, err := s.targetRepo.FindByMissionID(missionID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	if len(existingTargets) >= 3 {
+		return errors.New("cannot add more than 3 targets to a mission")
+	}
+
+	// 3) Create the new target with additional fields Country and Notes
+	t := &target.Target{
+		MissionID: missionID,
+		Name:      name,
+		Country:   country,
+		Notes:     notes,
+		Status:    "ONGOING",
+	}
+	return s.targetRepo.Create(t)
+}
+
+// CompleteTarget marks a target as completed and, if all targets in the mission are completed,
+// marks the mission as completed as well.
 func (s *service) CompleteTarget(targetID uint) error {
 	// Fetch the target
 	t, err := s.targetRepo.FindByID(targetID)
@@ -108,7 +141,7 @@ func (s *service) CompleteTarget(targetID uint) error {
 		return err
 	}
 
-	// Check if all targets are completed
+	// Check if all targets for this mission are completed
 	targets, err := s.targetRepo.FindByMissionID(t.MissionID)
 	if err != nil {
 		return err
@@ -131,8 +164,6 @@ func (s *service) CompleteTarget(targetID uint) error {
 	return nil
 }
 
-// ---------------- Additional Methods ---------------- //
-
 // ListMissions returns all missions.
 func (s *service) ListMissions() ([]Mission, error) {
 	return s.missionRepo.List()
@@ -147,16 +178,14 @@ func (s *service) GetMissionByID(id uint) (*Mission, error) {
 	return m, nil
 }
 
-// DeleteMission removes a mission if it isn't assigned to a cat (i.e. catID=0).
-// Alternatively, you might interpret "cannot delete if assigned to a cat" as
-// "cannot delete if status != COMPLETED" or some other logic – this is a sample.
+// DeleteMission removes a mission if it isn't assigned to a cat.
 func (s *service) DeleteMission(id uint) error {
 	m, err := s.missionRepo.FindByID(id)
 	if err != nil {
 		return errors.New("mission not found")
 	}
 
-	// If there's a cat assigned, forbid deletion
+	// If a cat is assigned, forbid deletion.
 	if m.CatID != 0 {
 		return errors.New("cannot delete a mission that is assigned to a cat")
 	}
@@ -164,16 +193,13 @@ func (s *service) DeleteMission(id uint) error {
 	return s.missionRepo.Delete(id)
 }
 
-// MarkMissionComplete forcibly completes a mission, ignoring whether
-// all targets are done. (Optional method)
+// MarkMissionComplete forcibly completes a mission.
 func (s *service) MarkMissionComplete(missionID uint) error {
 	return s.markMissionCompleted(missionID)
 }
 
-// AssignCat assigns a cat to an existing mission if the mission is not completed
-// and the cat has no ongoing missions.
+// AssignCat assigns a cat to an existing mission if valid.
 func (s *service) AssignCat(missionID, catID uint) error {
-	// Validate the mission
 	m, err := s.missionRepo.FindByID(missionID)
 	if err != nil {
 		return errors.New("mission not found")
@@ -182,13 +208,12 @@ func (s *service) AssignCat(missionID, catID uint) error {
 		return errors.New("cannot assign a cat to a completed mission")
 	}
 
-	// Validate cat
 	_, err = s.catRepo.FindByID(catID)
 	if err != nil {
 		return errors.New("cat not found")
 	}
 
-	// Check if cat is free
+	// Check if the cat is free.
 	_, err = s.missionRepo.FindOngoingByCatID(catID)
 	if err == nil {
 		return errors.New("this cat is already on another ongoing mission")
@@ -200,7 +225,7 @@ func (s *service) AssignCat(missionID, catID uint) error {
 	return s.missionRepo.Update(m)
 }
 
-// markMissionCompleted is an internal helper to set status to be COMPLETED.
+// markMissionCompleted is an internal helper to mark a mission as completed.
 func (s *service) markMissionCompleted(missionID uint) error {
 	m, err := s.missionRepo.FindByID(missionID)
 	if err != nil {

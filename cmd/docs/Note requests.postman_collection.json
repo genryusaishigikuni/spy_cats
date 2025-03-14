@@ -1,0 +1,77 @@
+{
+	"info": {
+		"_postman_id": "a5c37476-9a96-4b8e-b539-50c42b5baaa2",
+		"name": "Note requests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "39136646"
+	},
+	"item": [
+		{
+			"name": "http://localhost:8080/targets/:targetId/notes",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"content\": \"Initial note for target\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/targets/5/notes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"targets",
+						"5",
+						"notes"
+					]
+				},
+				"description": "Creates a new note for a target. Note creation is forbidden if the target (or the mission associated with the target) is completed."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/notes/:id",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"content\": \"Updated note content with additional details\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/notes/5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"notes",
+						"5"
+					]
+				},
+				"description": "Updates an existing note. Note updates are forbidden if either the target or the mission is completed."
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,198 @@
+{
+	"info": {
+		"_postman_id": "42edb087-ed5a-4eae-9647-7088c58ac139",
+		"name": "mission requests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "39136646"
+	},
+	"item": [
+		{
+			"name": "http://localhost:8080/missions/:id//targets",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Target Charlie\",\n  \"country\": \"USA\",\n  \"notes\": \"Initial instructions for Target Charlie\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/missions/1/targets",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"missions",
+						"1",
+						"targets"
+					]
+				},
+				"description": "Adds a new target to an ongoing mission. The mission must not be completed and cannot have more than 3 targets. This endpoint accepts additional fields for the target. Replace `:id` with the mission ID."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/missions",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"cat_id\": 1,\n  \"target_names\": [\"Target A\", \"Target B\"]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/missions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"missions"
+					]
+				},
+				"description": "Creates a new mission for a given cat, along with 1–3 targets. The cat must be available (i.e. not on an ongoing mission)."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/missions",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/missions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"missions"
+					]
+				},
+				"description": "Retrieves all missions."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/missions/:id",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/missions/5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"missions",
+						"5"
+					]
+				},
+				"description": "Retrieves a specific mission by its ID. Replace `:id` with the mission ID."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/missions/:id",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/missions/5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"missions",
+						"5"
+					]
+				},
+				"description": "Deletes a mission. A mission cannot be deleted if it is assigned to a cat."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/missions/:id/complete",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PATCH",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/missions/5/complete",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"missions",
+						"5",
+						"complete"
+					]
+				},
+				"description": "Forcibly marks a mission as completed (this may be used for manual override). Replace `:id` with the mission ID."
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/missions/:id/assign-cat/:catId",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PATCH",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/missions/5/assign-cat/5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"missions",
+						"5",
+						"assign-cat",
+						"5"
+					]
+				},
+				"description": "Assigns a cat to an existing mission, provided the mission is ongoing and the cat is not already on another mission. Replace `:id` with the mission ID and `:catId` with the cat ID."
+			},
+			"response": []
+		}
+	]
+}

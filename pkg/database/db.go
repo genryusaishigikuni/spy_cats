@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"github.com/genryusaishigikuni/spy_cats/internal/target"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,7 +14,6 @@ import (
 	"github.com/genryusaishigikuni/spy_cats/internal/cat"
 	"github.com/genryusaishigikuni/spy_cats/internal/mission"
 	"github.com/genryusaishigikuni/spy_cats/internal/note"
-	"github.com/genryusaishigikuni/spy_cats/internal/target"
 )
 
 // Connect opens a GORM DB connection based on the provided config.DBConfig.

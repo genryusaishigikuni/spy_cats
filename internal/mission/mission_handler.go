@@ -27,6 +27,7 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 		// Assign cat to an existing mission
 		missionGroup.PATCH("/:id/assign-cat/:catId", h.assignCat)
 		missionGroup.PATCH("/:id/complete", h.markMissionComplete)
+		missionGroup.POST("/:id/targets", h.addTarget)
 	}
 
 	// Mark a Target as complete
@@ -151,4 +152,30 @@ func (h *Handler) markMissionComplete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Mission marked as completed"})
+}
+
+func (h *Handler) addTarget(c *gin.Context) {
+	idStr := c.Param("id")
+	missionID, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid mission ID"})
+		return
+	}
+
+	var req struct {
+		Name    string `json:"name"`
+		Country string `json:"country"`
+		Notes   string `json:"notes"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.service.AddTargetToMission(uint(missionID), req.Name, req.Country, req.Notes); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Target added successfully"})
 }

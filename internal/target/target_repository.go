@@ -1,6 +1,8 @@
 package target
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Repository interface {
 	Create(t *Target) error
