@@ -87,7 +87,7 @@ spy_cats/
 ## Getting Started
 ### Prerequisites
 
-    Go (1.18+)
+    Go (1.24.1)
     Docker & Docker Compose
     Git
 
